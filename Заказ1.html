@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Calendar</title>
+  <style>
+    body {
+      font-family: "Segoe UI", sans-serif;
+      background: #f4f4f4;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+
+    h1 {
+      position: relative;
+      top: -300px;
+      right: -200px;
+    }
+
+    .calendar {
+      background: white;
+      padding: 20px;
+      border-radius: 20px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+      width: 320px;
+      overflow: hidden;
+      margin-left: 10px;
+      margin-right: 10px;
+    }
+
+    .calendar-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 1.3em;
+      font-weight: bold;
+      margin-bottom: 20px;
+    }
+
+    .calendar-header button {
+      background: none;
+      border: none;
+      font-size: 1.5em;
+      cursor: pointer;
+      transition: transform 0.2s ease;
+    }
+
+    .calendar-header button:hover {
+      transform: scale(1.2);
+    }
+
+    #calendar-days {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 10px;
+      transition: opacity 0.3s ease, transform 0.3s ease;
+    }
+
+    .day-name {
+      text-align: center;
+      font-weight: bold;
+      color: #888;
+    }
+
+    .day {
+      text-align: center;
+      padding: 10px;
+      border-radius: 10px;
+      background: #f0f0f0;
+      transition: background 0.3s;
+    }
+
+    .day:hover {
+      background: #cde3ff;
+    }
+
+    .other-month {
+      color: #ccc;
+      background: #f9f9f9;
+    }
+
+    .week-label {
+      grid-column: span 7;
+      text-align: left;
+      font-size: 12px;
+      color: rgba(0, 0, 0, 0.3);
+      padding: 4px 0;
+      border-top: 1px dashed rgba(0, 0, 0, 0.1);
+      margin-top: 6px;
+      margin-bottom: -6px;
+    }
+
+    .slide-out-left {
+      animation: slideOutLeft 0.3s forwards;
+    }
+
+    .slide-in-right {
+      animation: slideInRight 0.3s forwards;
+    }
+
+    .slide-out-right {
+      animation: slideOutRight 0.3s forwards;
+    }
+
+    .slide-in-left {
+      animation: slideInLeft 0.3s forwards;
+    }
+
+    @keyframes slideOutLeft {
+      to {
+        opacity: 0;
+        transform: translateX(-50px);
+      }
+    }
+
+    @keyframes slideInRight {
+      from {
+        opacity: 0;
+        transform: translateX(50px);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    @keyframes slideOutRight {
+      to {
+        opacity: 0;
+        transform: translateX(50px);
+      }
+    }
+
+    @keyframes slideInLeft {
+      from {
+        opacity: 0;
+        transform: translateX(-50px);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    .transitioning {
+      pointer-events: none;
+    }
+
+    @media (max-width: 480px) {
+  .calendar {
+    width: 95%;
+    padding: 15px;
+    border-radius: 15px;
+  }
+
+  .calendar-header {
+    font-size: 1.1em;
+  }
+
+  .calendar-header button {
+    font-size: 1.3em;
+  }
+
+  .day {
+    padding: 8px;
+    font-size: 0.9em;
+  }
+
+  .day-name {
+    font-size: 0.8em;
+  }
+
+  .week-label {
+    font-size: 10px;
+    padding: 2px 0;
+  }
+}
+
+  </style>
+</head>
+<body>
+
+  <div class="calendar">
+    <div class="calendar-header">
+      <button onclick="changeMonth(-1)">←</button>
+      <div id="month-year"></div>
+      <button onclick="changeMonth(1)">→</button>
+    </div>
+    <div id="calendar-days"></div>
+  </div>
+
+  <script>
+    const monthNames = [
+      "January", "February", "March", "April", "May", "June",
+      "July", "August", "September", "October", "November", "December"
+    ];
+    const dayNames = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+    const weekLabels = ["Munarbek", "Bagaz", "Ogi", "Ripki"];
+    let currentDate = new Date();
+
+    function renderCalendar(date) {
+      const year = date.getFullYear();
+      const month = date.getMonth();
+      const calendarDays = document.getElementById('calendar-days');
+      const monthYear = document.getElementById('month-year');
+
+      monthYear.textContent = `${monthNames[month]} ${year}`;
+      calendarDays.innerHTML = "";
+
+      dayNames.forEach(day => {
+        const dayEl = document.createElement("div");
+        dayEl.className = "day-name";
+        dayEl.textContent = day;
+        calendarDays.appendChild(dayEl);
+      });
+
+      const firstDayOfMonth = new Date(year, month, 1);
+      const lastDayOfMonth = new Date(year, month + 1, 0);
+      const firstWeekDay = (firstDayOfMonth.getDay() + 6) % 7;
+      const daysInMonth = lastDayOfMonth.getDate();
+      const daysInPrevMonth = new Date(year, month, 0).getDate();
+
+      let totalDayCount = 0;
+      let weekNumber = 0;
+
+      const totalCells = firstWeekDay + daysInMonth;
+      const totalWeeks = Math.ceil(totalCells / 7);
+
+      for (let i = firstWeekDay - 1; i >= 0; i--) {
+        if (totalDayCount % 7 === 0) {
+          const label = document.createElement("div");
+          label.className = "week-label";
+          label.textContent = weekLabels[weekNumber % weekLabels.length];
+          calendarDays.appendChild(label);
+          weekNumber++;
+        }
+
+        const dayEl = document.createElement("div");
+        dayEl.className = "day other-month";
+        dayEl.textContent = daysInPrevMonth - i;
+        calendarDays.appendChild(dayEl);
+        totalDayCount++;
+      }
+
+      for (let day = 1; day <= daysInMonth; day++) {
+        if (totalDayCount % 7 === 0) {
+          const label = document.createElement("div");
+          label.className = "week-label";
+          label.textContent = weekLabels[weekNumber % weekLabels.length];
+          calendarDays.appendChild(label);
+          weekNumber++;
+        }
+
+        const dayEl = document.createElement("div");
+        dayEl.className = "day";
+        dayEl.textContent = day;
+        calendarDays.appendChild(dayEl);
+        totalDayCount++;
+      }
+
+      const remainingCells = (7 - (totalDayCount % 7)) % 7;
+      for (let i = 1; i <= remainingCells; i++) {
+        if (totalDayCount % 7 === 0) {
+          const label = document.createElement("div");
+          label.className = "week-label";
+          label.textContent = weekLabels[weekNumber % weekLabels.length];
+          calendarDays.appendChild(label);
+          weekNumber++;
+        }
+
+        const dayEl = document.createElement("div");
+        dayEl.className = "day other-month";
+        dayEl.textContent = i;
+        calendarDays.appendChild(dayEl);
+        totalDayCount++;
+      }
+    }
+
+    function changeMonth(delta) {
+      const calendarDays = document.getElementById('calendar-days');
+      const outClass = delta > 0 ? "slide-out-left" : "slide-out-right";
+      const inClass = delta > 0 ? "slide-in-right" : "slide-in-left";
+
+      calendarDays.classList.add(outClass, "transitioning");
+
+      setTimeout(() => {
+        currentDate.setMonth(currentDate.getMonth() + delta);
+        renderCalendar(currentDate);
+
+        calendarDays.classList.remove(outClass);
+        calendarDays.classList.add(inClass);
+
+        setTimeout(() => {
+          calendarDays.classList.remove(inClass, "transitioning");
+        }, 300);
+      }, 300);
+    }
+
+    renderCalendar(currentDate);
+  </script>
+</body>
+</html>
